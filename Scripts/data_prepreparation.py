@@ -1,78 +1,93 @@
-import ROOT
-import copy, os, re, sys
-import argparse
+import os
+import sys
 import math
+import copy
+import re
+import argparse
+import ROOT
 
-pi = math.pi
-
-#COPY FROM test_ZHbb.py u
-
-## Method to resolve regular expressions in file names.
-#  TChain::Add only supports wildcards in the last items, i.e. on file level.
-#  This method can resolve all wildcards at any directory level,
-#  e.g. /my/directory/a*test*/pattern/*.root
-#  @param pattern      the file name pattern using python regular expressions
-#  @return list of all files matching the pattern
-def findAllFilesInPath( pattern ,path ):
-    files = []
-    items = pattern.split( '/' )
+def find_all_files_in_path(pattern, path):
+    """
+    Recursively finds all files in a directory tree that match the pattern. There can be wildcards in
+    the path which can be resolved at any directory level (not just file level like in ROOT.TChain()).
     
-    def checkPath( path, items ):
-        # nested method to deal with the recursion
-        import ROOT
-        if not items:
+    Args:
+        pattern (str) - The pattern to be matched with optional wildcards (e.g. "dir/*/my_file.txt").
+        path (str) - The starting directory path.
+        
+    Returns:
+        list [str] - list of all files which match the pattern.
+    """
+    
+    files = []
+    items = pattern.split('/')
+    
+    def check_path(current_path, remaining_items):
+        """Recursive helper function to traverse directories."""
+        
+        # End recursion if the end of the path is reached
+        if not remaining_items:
             return
-        myItems = copy.copy( items )
-        item = myItems.pop(0)
+        
+        my_items = copy.copy(remaining_items)
+        item = my_items.pop(0)
+        
+        # Deal with wildcards
         if '*' in item:
-            directory = ROOT.gSystem.OpenDirectory( path )
-            # beg and end of line control so that *truc does not match bla_truc_xyz
-            item = "^"+item.replace( '*', '.*' )+"$"
-            p = re.compile( item )
+            directory = ROOT.gSystem.OpenDirectory(current_path)
+            regex_item = "^"+item.replace('*', '.*')+"$" # Create string regex version of item
+            regex_pattern = re.compile(regex_item) # Create regex pattern object of item
+            
             entry = True
             while entry:
-                entry = ROOT.gSystem.GetDirEntry( directory )
-                if p.match( entry ):
-                    if not myItems:
-                        files.append( path + entry )
+                entry = ROOT.gSystem.GetDirEntry(directory)
+                if regex_pattern.match(entry):
+                    if not my_items:
+                        files.append(current_path + entry)
                     else:
-                        checkPath( path + entry + '/', myItems)
-            ROOT.gSystem.FreeDirectory( directory )
-        elif item and not myItems:
-            files.append( path + item )
+                        check_path(current_path + entry + '/', my_items)
+                        
+            ROOT.gSystem.FreeDirectory(directory)
+            
+        elif item and not my_items:
+            files.append(current_path + item)
         else:
-            checkPath( path + item + '/', myItems )
-    checkPath( path, items )
+            check_path(current_path + item + '/', my_items)
+            
+    check_path(path, items)
     return files
 
 
-
-
-
 def main(args):
-    directory = "/home/connor/"+args.inputsample
+    """
+    Read all *.root files to create and fill ROOT histograms for each detector observable (feature).
+    The five selection cuts are made on the data as prepreparation. Yields are also calculated
+    following each of the five selection cuts.
+    """
+    
+    directory = "/home/connor/" + args.inputsample
     pattern = "*.root"
 
     luminosity = 140000
-    sumofweights = 0
+    sum_of_weights = 0.0
 
-    tree = ROOT.TChain( "NOMINAL" )
-    nFiles = 0
-    for fileName in findAllFilesInPath( pattern, directory ):
-        nFiles += tree.Add( fileName )
-        cFile = ROOT.TFile.Open(fileName, "READ")
-        h = cFile.Get("h_metadata")
-        sumofweights += h.GetBinContent(8)
+    # Create TChain() object to chain together *.root files that contain "NOMINAL" tree ie. treat the separate files as one large dataset.
+    tree = ROOT.TChain("NOMINAL")
+    n_files = 0
     
-    splitsec = args.inputsample.split(".")
-    outputsample = splitsec[4]+"."+splitsec[5]+".root"
+    for file_name in find_all_files_in_path(pattern, directory):
+        n_files += tree.Add(file_name)
+        current_file = ROOT.TFile.Open(file_name, "READ")
+        hist_metadata = current_file.Get("h_metadata")
+        sum_of_weights += hist_metadata.GetBinContent(8)
+    
+    split_parts = args.inputsample.split(".")
+    outputsample = split_parts[4] + "." + split_parts[5] + ".root"
 
     print()
     print(outputsample)
 
-
-    ####      define histograms  
-
+    # Define histograms
     pTl0 = ROOT.TH1D("lep0_pt","p_{T}^{l_0}; Transverse Momentum [GeV]; Normalised counts" ,70,0 ,250)
     pTl0.SetLineWidth(2)
     pTl0.Sumw2()
@@ -157,12 +172,12 @@ def main(args):
     coslminus.SetLineWidth(2)
     coslminus.Sumw2()
 
-    signedphi = ROOT.TH1D("signedphi", "Signed #phi; Signed #phi; Normalised counts", 8, -pi, pi)
+    signedphi = ROOT.TH1D("signedphi", "Signed #phi; Signed #phi; Normalised counts", 8, -math.pi, math.pi)
     signedphi.SetLineWidth(2)
     signedphi.Sumw2()
 
-    #event loop
-    for i in range(0,tree.GetEntries()):
+    # Loop over events
+    for i in range(0, tree.GetEntries()):
         tree.GetEntry(i)
         p4_leptons = []
         p4_jets = []
@@ -172,81 +187,81 @@ def main(args):
         cut_mbb = False
         cut_metpt = False
 
-        #cut for same flavour opposite charge leptons
-        if ( (getattr(tree, "lep_0") == getattr(tree, "lep_1")) and (getattr(tree, "lep_0_q") != getattr(tree, "lep_1_q")) ):
+        # Cut on same flavour opposite charge leptons
+        if ((getattr(tree, "lep_0") == getattr(tree, "lep_1")) and (getattr(tree, "lep_0_q") != getattr(tree, "lep_1_q"))):
 
             cut_twoLeptons = True
 
-            #calculate weights
+            # Calculate weights
             cross_section = getattr(tree, "cross_section")
             weight_mc = getattr(tree, "weight_mc")
             weight_pile = getattr(tree, "NOMINAL_pileup_combined_weight")
-            wtotal = weight_mc*weight_pile*cross_section*luminosity/(sumofweights)
+            wtotal = weight_mc*weight_pile*cross_section*luminosity/(sum_of_weights)
 
-            #cuts for b-tagging
-            if ( (getattr(tree, "jet_0_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_1_b_tagged_DL1r_FixedCutBEff_70")) == 1 ):
+            # Cuts on b-tagging
+            if ((getattr(tree, "jet_0_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_1_b_tagged_DL1r_FixedCutBEff_70")) == 1):
                 p4_jets.append(getattr(tree, "jet_0_p4"))
                 p4_jets.append(getattr(tree, "jet_1_p4"))
                 cut_twoJets = True
 
-            if ( (getattr(tree, "jet_0_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_2_b_tagged_DL1r_FixedCutBEff_70")) == 1 ):
+            if ((getattr(tree, "jet_0_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_2_b_tagged_DL1r_FixedCutBEff_70")) == 1):
                 p4_jets.append(getattr(tree, "jet_0_p4"))
                 p4_jets.append(getattr(tree, "jet_2_p4"))
                 cut_twoJets = True
 
-            if ( (getattr(tree, "jet_0_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_3_b_tagged_DL1r_FixedCutBEff_70")) == 1 ):
+            if ((getattr(tree, "jet_0_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_3_b_tagged_DL1r_FixedCutBEff_70")) == 1):
                 p4_jets.append(getattr(tree, "jet_0_p4"))
                 p4_jets.append(getattr(tree, "jet_3_p4"))
                 cut_twoJets = True
 
-            if ( (getattr(tree, "jet_1_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_2_b_tagged_DL1r_FixedCutBEff_70")) == 1 ):
+            if ((getattr(tree, "jet_1_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_2_b_tagged_DL1r_FixedCutBEff_70")) == 1):
                 p4_jets.append(getattr(tree, "jet_1_p4"))
                 p4_jets.append(getattr(tree, "jet_2_p4"))
                 cut_twoJets = True
             
-            if ( (getattr(tree, "jet_1_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_3_b_tagged_DL1r_FixedCutBEff_70")) == 1 ):
+            if ((getattr(tree, "jet_1_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_3_b_tagged_DL1r_FixedCutBEff_70")) == 1):
                 p4_jets.append(getattr(tree, "jet_1_p4"))
                 p4_jets.append(getattr(tree, "jet_3_p4"))
                 cut_twoJets = True
 
-            if ( (getattr(tree, "jet_2_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_3_b_tagged_DL1r_FixedCutBEff_70")) == 1 ):
+            if ((getattr(tree, "jet_2_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_3_b_tagged_DL1r_FixedCutBEff_70")) == 1):
                 p4_jets.append(getattr(tree, "jet_2_p4"))
                 p4_jets.append(getattr(tree, "jet_3_p4"))
                 cut_twoJets = True
 
 
-            #cut for delta R between b-jets
-            if ( (cut_twoJets == True) and  (p4_jets[0].DeltaR(p4_jets[1]) > 0.5) and (p4_jets[0].DeltaR(p4_jets[1]) < 3.5) ):
+            # Cut on delta R between b-jets
+            if ((cut_twoJets == True) and (p4_jets[0].DeltaR(p4_jets[1]) > 0.5) and (p4_jets[0].DeltaR(p4_jets[1]) < 3.5)):
                 cut_deltaR = True
 
-            #cut for mbb
-            if ( (cut_twoJets == True) and ((p4_jets[0]+p4_jets[1]).M() > 75) and ((p4_jets[0]+p4_jets[1]).M() < 145)  ):
+            # Cut on mbb
+            if ((cut_twoJets == True) and ((p4_jets[0]+p4_jets[1]).M() > 75) and ((p4_jets[0]+p4_jets[1]).M() < 145)):
                 cut_mbb = True
 
-            #cut for metpt
-            if (  getattr(tree, "met_p4").Pt() < 52 ):
+            # Cut on metpt
+            if (getattr(tree, "met_p4").Pt() < 52):
                 cut_metpt = True
 
 
-        #fill histograms
+        # Fill histograms
             
-        #filling histograms after lepton flavour/charge cut
+        # Filling histograms after lepton flavour/charge cut
         if cut_twoLeptons == True:
             c1pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-            #filling histograms after b-tagged jet cut
+            # Filling histograms after b-tagged jet cut
             if cut_twoJets == True:
                 c2pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-                #filling histograms after deltaR cut
+                # Filling histograms after deltaR cut
                 if cut_deltaR == True:
                     c3pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-                    #filling histograms after mbb cut
+                    # Filling histograms after mbb cut
                     if cut_mbb == True:
                         c4pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-                        #filling histograms after metpt
+                        # Filling histograms after metpt
                         if cut_metpt == True:
                             c5pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
@@ -279,7 +294,7 @@ def main(args):
                             else:
                                 signedphi.Fill(p4_leptons[1].DeltaPhi(p4_leptons[0]), wtotal)
 
-    #integrate the histograms
+    # Integrate histograms
     intc1 = c1pTl0.Integral(0, c1pTl0.GetNbinsX()+1)
     intc2 = c2pTl0.Integral(0, c2pTl0.GetNbinsX()+1)
     intc3 = c3pTl0.Integral(0, c3pTl0.GetNbinsX()+1)
@@ -323,11 +338,11 @@ def main(args):
     del tree
 
 if __name__ == "__main__":
-    # parse the CLI arguments
+    # Parse command line input arguments
     parser = argparse.ArgumentParser(description='script to run over ntuple dataset')
     parser.add_argument('--inputsample', '-i', metavar='INPUT', type=str, dest="inputsample", default="ZH_llbb_345055/", help='directory for input root files')
     parser.add_argument('--outputfile', '-o', metavar='OUTPUT', type=str, dest="outputfile", default="llbbhistograms.root", help='outputfile for process')
     args = parser.parse_args()
 
-    # call the main function
-    main(args);
+    # Call main function
+    main(args)
