@@ -249,50 +249,50 @@ def main(args):
         if cut_twoLeptons:
             c1pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-            # Filling histograms after b-tagged jet cut
-            if cut_twoJets:
-                c2pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
+        # Filling histograms after b-tagged jet cut
+        if cut_twoLeptons and cut_twoJets:
+            c2pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-                # Filling histograms after deltaR cut
-                if cut_deltaR:
-                    c3pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
+        # Filling histograms after deltaR cut
+        if cut_twoLeptons and cut_twoJets and cut_deltaR:
+            c3pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-                    # Filling histograms after mbb cut
-                    if cut_mbb:
-                        c4pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
+        # Filling histograms after mbb cut
+        if cut_twoLeptons and cut_twoJets and cut_deltaR and cut_mbb:
+            c4pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-                        # Filling histograms after metpt
-                        if cut_metpt:
-                            c5pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
+        # Filling histograms after metpt
+        if cut_twoLeptons and cut_twoJets and cut_deltaR and cut_mbb and cut_metpt:
+            c5pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
-                            p4_leptons.append(getattr(tree, "lep_0_p4"))
-                            p4_leptons.append(getattr(tree, "lep_1_p4"))
-                            pTj0.Fill(p4_jets[0].Pt(), wtotal)
-                            pTj1.Fill(p4_jets[1].Pt(), wtotal)
-                            mbb.Fill((p4_jets[0]+p4_jets[1]).M(), wtotal)
-                            Rjets.Fill(p4_jets[0].DeltaR(p4_jets[1]), wtotal)
-                            phibb.Fill(p4_jets[0].DeltaPhi(p4_jets[1]), wtotal)
-                            etabb.Fill(abs(p4_jets[0].Eta()-p4_jets[1].Eta()), wtotal)
-                            cosll.Fill(ROOT.TMath.Cos(p4_jets[0].Phi()-p4_jets[1].Phi()), wtotal)
-                            
-                            pTl0.Fill(p4_leptons[0].Pt(), wtotal)
-                            pTl1.Fill(p4_leptons[1].Pt(), wtotal)
-                            njets.Fill(getattr(tree, "n_jets"), wtotal)
-                            mll.Fill((p4_leptons[0]+p4_leptons[1]).M(), wtotal)
-                            pTdilep.Fill(getattr(tree, "dilep_p4").Pt(), wtotal)
-                            phill.Fill(p4_leptons[0].DeltaPhi(p4_leptons[1]), wtotal)
-                            etall.Fill(abs(p4_leptons[0].Eta()-p4_leptons[1].Eta()), wtotal)
-                            metpt.Fill(getattr(tree, "met_p4").Pt(), wtotal)
+            p4_leptons.append(getattr(tree, "lep_0_p4"))
+            p4_leptons.append(getattr(tree, "lep_1_p4"))
+            pTj0.Fill(p4_jets[0].Pt(), wtotal)
+            pTj1.Fill(p4_jets[1].Pt(), wtotal)
+            mbb.Fill((p4_jets[0]+p4_jets[1]).M(), wtotal)
+            Rjets.Fill(p4_jets[0].DeltaR(p4_jets[1]), wtotal)
+            phibb.Fill(p4_jets[0].DeltaPhi(p4_jets[1]), wtotal)
+            etabb.Fill(abs(p4_jets[0].Eta()-p4_jets[1].Eta()), wtotal)
+            cosll.Fill(ROOT.TMath.Cos(p4_jets[0].Phi()-p4_jets[1].Phi()), wtotal)
+            
+            pTl0.Fill(p4_leptons[0].Pt(), wtotal)
+            pTl1.Fill(p4_leptons[1].Pt(), wtotal)
+            njets.Fill(getattr(tree, "n_jets"), wtotal)
+            mll.Fill((p4_leptons[0]+p4_leptons[1]).M(), wtotal)
+            pTdilep.Fill(getattr(tree, "dilep_p4").Pt(), wtotal)
+            phill.Fill(p4_leptons[0].DeltaPhi(p4_leptons[1]), wtotal)
+            etall.Fill(abs(p4_leptons[0].Eta()-p4_leptons[1].Eta()), wtotal)
+            metpt.Fill(getattr(tree, "met_p4").Pt(), wtotal)
 
-                            if (getattr(tree, "lep_0_q") == -1):
-                                coslminus.Fill(ROOT.TMath.Cos(p4_leptons[0].Phi()-(p4_leptons[0]+p4_leptons[1]).Phi()), wtotal)
-                            elif (getattr(tree, "lep_1_q") == -1):
-                                coslminus.Fill(ROOT.TMath.Cos(p4_leptons[1].Phi()-(p4_leptons[0]+p4_leptons[1]).Phi()), wtotal)
+            if (getattr(tree, "lep_0_q") == -1):
+                coslminus.Fill(ROOT.TMath.Cos(p4_leptons[0].Phi()-(p4_leptons[0]+p4_leptons[1]).Phi()), wtotal)
+            elif (getattr(tree, "lep_1_q") == -1):
+                coslminus.Fill(ROOT.TMath.Cos(p4_leptons[1].Phi()-(p4_leptons[0]+p4_leptons[1]).Phi()), wtotal)
 
-                            if (p4_leptons[0].Eta() > p4_leptons[1].Eta()):
-                                signedphi.Fill(p4_leptons[0].DeltaPhi(p4_leptons[1]), wtotal)
-                            else:
-                                signedphi.Fill(p4_leptons[1].DeltaPhi(p4_leptons[0]), wtotal)
+            if (p4_leptons[0].Eta() > p4_leptons[1].Eta()):
+                signedphi.Fill(p4_leptons[0].DeltaPhi(p4_leptons[1]), wtotal)
+            else:
+                signedphi.Fill(p4_leptons[1].DeltaPhi(p4_leptons[0]), wtotal)
 
     # Integrate histograms
     intc1 = c1pTl0.Integral(0, c1pTl0.GetNbinsX()+1)
