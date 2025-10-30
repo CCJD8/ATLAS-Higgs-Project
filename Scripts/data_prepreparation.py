@@ -196,7 +196,7 @@ def main(args):
             cross_section = getattr(tree, "cross_section")
             weight_mc = getattr(tree, "weight_mc")
             weight_pile = getattr(tree, "NOMINAL_pileup_combined_weight")
-            wtotal = weight_mc*weight_pile*cross_section*luminosity/(sum_of_weights)
+            wtotal = (weight_mc * weight_pile * cross_section * luminosity) / sum_of_weights
 
             # Cuts on b-tagging
             if ((getattr(tree, "jet_0_b_tagged_DL1r_FixedCutBEff_70")) == 1 and (getattr(tree, "jet_1_b_tagged_DL1r_FixedCutBEff_70")) == 1):
@@ -246,23 +246,23 @@ def main(args):
         # Fill histograms
             
         # Filling histograms after lepton flavour/charge cut
-        if cut_twoLeptons == True:
+        if cut_twoLeptons:
             c1pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
             # Filling histograms after b-tagged jet cut
-            if cut_twoJets == True:
+            if cut_twoJets:
                 c2pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
                 # Filling histograms after deltaR cut
-                if cut_deltaR == True:
+                if cut_deltaR:
                     c3pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
                     # Filling histograms after mbb cut
-                    if cut_mbb == True:
+                    if cut_mbb:
                         c4pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
                         # Filling histograms after metpt
-                        if cut_metpt == True:
+                        if cut_metpt:
                             c5pTl0.Fill(getattr(tree, "lep_0_p4").Pt(), wtotal)
 
                             p4_leptons.append(getattr(tree, "lep_0_p4"))
