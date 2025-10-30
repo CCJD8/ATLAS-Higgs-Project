@@ -1,20 +1,17 @@
 import numpy as np
 import pandas as pd
 import uproot
-import matplotlib.pyplot as plt
+from ROOT import *
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import accuracy_score
-from ROOT import *
-import copy, os, re, sys
-import argparse
+from keras.models import Sequential
+from keras.layers import Dense
+
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasStyle.C')
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasUtils.C')
 gROOT.SetBatch(kTRUE)
 SetAtlasStyle()
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
 
 
 # Import datasets
@@ -26,36 +23,36 @@ llvv_tree = uproot.open('Ntuple_llvv.root:nominal')
 other_tree = uproot.open('Ntuple_other.root:nominal')
 
 # Convert to pandas
-pdZH = ZH_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd") #11 elements
-pdZplus = Zplus_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
-pdttb = ttb_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
-pdZbb = Zbb_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
-pdllvv = llvv_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
-pdother = other_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
+pd_ZH = ZH_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd") #11 elements
+pd_Zplus = Zplus_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
+pd_ttb = ttb_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
+pd_Zbb = Zbb_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
+pd_llvv = llvv_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
+pd_other = other_tree.arrays(["lep0_pt", "lep1_pt", "jet0_pt", "jet1_pt", "n_jets", "deltaRjets", "mbb", "mll", "metpt", "pTdilep","weights","mva_random_number"], library="pd")
 
 #Add signal column
-pdZH["signal"] = 1
-pdZplus["signal"] = 0
-pdttb["signal"] = 0
-pdZbb["signal"] = 0
-pdllvv["signal"] = 0
-pdother["signal"] = 0
+pd_ZH["signal"] = 1
+pd_Zplus["signal"] = 0
+pd_ttb["signal"] = 0
+pd_Zbb["signal"] = 0
+pd_llvv["signal"] = 0
+pd_other["signal"] = 0
 
 #Combine datasets
-pddataset = pd.concat([pdZH, pdZplus, pdttb, pdZbb, pdllvv, pdother])
+pd_dataset = pd.concat([pd_ZH, pd_Zplus, pd_ttb, pd_Zbb, pd_llvv, pd_other])
 
-# Change pandas dataframe to array with input variables (X), output variable (Y) and weights (w)
-X = pddataset.iloc[:,0:10].values
-Y = pddataset.iloc[:,12:13].values
-w = pddataset.iloc[:,10:11].values
-randno = pddataset.iloc[:,11:12].values
-features = list(pddataset.iloc[:,0:10].columns)
+# Create arrays for the features (X), labels (Y), and weights (w)
+X = pd_dataset.iloc[:,0:10].values
+Y = pd_dataset.iloc[:,12:13].values
+w = pd_dataset.iloc[:,10:11].values
+
+mva_random_number = pd_dataset.iloc[:,11:12].values
+feature_names = list(pd_dataset.iloc[:,0:10].columns)
 
 # Normalise the data
 X = StandardScaler().fit_transform(X)
-X = X
 
-# K-fold the data
+# Divide and shuffle the data into k folds
 kfold = KFold(n_splits=3, shuffle=True, random_state=22)
 
 
@@ -63,8 +60,8 @@ for i, (train, test) in enumerate(kfold.split(X)):
     kfold.split(Y)
     print("Split ", i)
 
-    # Create the neural network
-    modelname = "model8cross"+str(i)
+    # Set model hyperparameters
+    model_name = "model8cross"+str(i)
     model = Sequential()
     model.add(Dense(8, input_dim=10, activation='elu'))
     model.add(Dense(6, activation='elu'))
@@ -72,22 +69,23 @@ for i, (train, test) in enumerate(kfold.split(X)):
     model.add(Dense(12, activation='elu'))
     model.add(Dense(6, activation='elu'))
     model.add(Dense(1, activation='sigmoid'))
+
+    # Specify the training configuration (loss function, optimizer, metrics to monitor
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-    # Train the neural network
+    # Training with fit() which slices data into batches and iterates over dataset for x epochs. history object stores training metrics (loss, metric values) per epoch
     history = model.fit(X[train], Y[train], validation_data=(X[test], Y[test]), epochs=40, batch_size=64)
 
-    # Save the network
-    model.save(modelname)
+    # Save trained model (architecture, weights, optimizer state)
+    model.save(model_name)
 
     # Save the history.history dict for later plotting
-    historydict = pd.DataFrame(history.history)
-    historycsv = modelname+"history.csv"
-    with open(historycsv, mode='w') as f:
-        historydict.to_csv(f)
+    history_dict = pd.DataFrame(history.history)
+    history_csv = model_name+"history.csv"
+    with open(history_csv, mode='w') as f:
+        history_dict.to_csv(f)
 
     print(model.summary())
-
 
     # Check model performance
     Y_pred = model.predict(X[test])
