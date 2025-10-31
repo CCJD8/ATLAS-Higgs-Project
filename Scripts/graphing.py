@@ -1,9 +1,7 @@
-from ROOT import *
-import copy, os, re, sys
-import argparse
+import math
 import ctypes
 import numpy as np
-import math
+from ROOT import *
 
 pi = math.pi
 
@@ -66,26 +64,24 @@ phiS.Sumw2()
 phiratio = TH1D("phiratio", "phiratio; Signed #Delta#phi (ll); S/sqrt(S+B)", 8, -pi, pi)
 phiratio.Sumw2()
 
-stackhistos=[stackpTl0, stackpTl1, stackpTj0, stackpTj1, stackmll, stackmbb, stackpTdilep, stackdeltaRjets, stacketabb, stacketall, stackn_jets, stackphibb, stackphill, stackmetpt, stackcosll, stackcoslminus, stacksignedphi]
+stackhistos = [stackpTl0, stackpTl1, stackpTj0, stackpTj1, stackmll, stackmbb, stackpTdilep, stackdeltaRjets, stacketabb, stacketall, stackn_jets, stackphibb, stackphill, stackmetpt, stackcosll, stackcoslminus, stacksignedphi]
  
 cutcounter = 0
 
-
-
 # Creating signal/background ratio plots
 for var in varList:
-    leg = TLegend(0.42,0.8,0.72,0.9)
+    leg = TLegend(0.42, 0.8, 0.72, 0.9)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
     leg.SetEntrySeparation(0.3)
     leg.SetTextFont(20)
-    maximum = -999.
+    maximum = -999.0
 
     for sample in sigbackgroundsamples:
 
         if sample[0] == "Signal": # Signal histogram
             for i in range(0, len(sample[1])):
-                infile = TFile.Open(sample[1][i],"READ")
+                infile = TFile.Open(sample[1][i], "READ")
                 
                 if (i == 0):
                     signalhisto = infile.Get(var)
@@ -103,7 +99,7 @@ for var in varList:
 
         else: # Background histogram
             for i in range(0, len(sample[1])):
-                infile = TFile.Open(sample[1][i],"READ")
+                infile = TFile.Open(sample[1][i], "READ")
                 
                 if (i == 0):
                     backgroundhisto = infile.Get(var)
@@ -129,12 +125,12 @@ for var in varList:
         signalintdown = signalhisto.Integral(x, maxx)
         backgroundintdown = backgroundhisto.Integral(x, maxx)
         
-        if ((signalintup+backgroundintup) != 0):
-            ratioup = signalintup/sqrt(signalintup+backgroundintup)
+        if ((signalintup + backgroundintup) != 0):
+            ratioup = signalintup / np.sqrt(signalintup + backgroundintup)
         else:
             ratioup = 0
-        if ((signalintdown+backgroundintdown) != 0):
-            ratiodown = signalintdown/sqrt(signalintdown+backgroundintdown)
+        if ((signalintdown + backgroundintdown) != 0):
+            ratiodown = signalintdown / np.sqrt(signalintdown + backgroundintdown)
         else:
             ratiodown = 0
 
@@ -152,23 +148,23 @@ for var in varList:
 
     ratiohistoup.Draw('hist')
     ratiohistodown.Draw('histSAME')
-    leg.AddEntry(ratiohistoup,("Upper cut point: "+maxratioatup),'l')
-    leg.AddEntry(ratiohistodown,("Lower cut point: "+maxratioatdown),'l')
+    leg.AddEntry(ratiohistoup, ("Upper cut point: " + maxratioatup), 'l')
+    leg.AddEntry(ratiohistodown, ("Lower cut point: " + maxratioatdown), 'l')
     leg.Draw('SAME')
-    canv.SaveAs('ratio_ShapePlot_'+var+'.pdf')
+    canv.SaveAs('ratio_ShapePlot_' + var + '.pdf')
     canv.Clear()
 
 
 
 # Calculating yields after successive selection cuts
 for var in integralvars:
-    cuthistos=[]
-    cutintegrals=[]
-    cutintegralserror=[]
+    cuthistos = []
+    cutintegrals = []
+    cutintegralserror = []
 
     for sample in samples:
         for i in range(0, len(sample[1])):
-            infile = TFile.Open(sample[1][i],"READ")
+            infile = TFile.Open(sample[1][i], "READ")
             if (i == 0):
                 histo = infile.Get(var)
                 histo.SetDirectory(0)
@@ -185,43 +181,43 @@ for var in integralvars:
     
     cutcounter += 1
     
-    totalbackground = cutintegrals[0]+cutintegrals[1]+cutintegrals[2]+cutintegrals[3]+cutintegrals[4]
-    totalbackgrounderror = np.sqrt(cutintegralserror[0]**2+cutintegralserror[2]**2+cutintegralserror[2]**2+cutintegralserror[3]**2+cutintegralserror[4]**2)
-    SB = cutintegrals[5]/sqrt(cutintegrals[5]+totalbackground)
-    SBerror = sqrt(((cutintegrals[5]+cutintegralserror[5])/sqrt(cutintegrals[5]+cutintegralserror[5]+totalbackground) - SB)**2 + (cutintegrals[5]/sqrt(cutintegrals[5]+totalbackground+totalbackgrounderror) - SB)**2)
+    totalbackground = cutintegrals[0] + cutintegrals[1] + cutintegrals[2] + cutintegrals[3] + cutintegrals[4]
+    totalbackgrounderror = np.sqrt(cutintegralserror[0]**2 + cutintegralserror[2]**2 + cutintegralserror[2]**2 + cutintegralserror[3]**2 + cutintegralserror[4]**2)
+    SB = cutintegrals[5] / np.sqrt(cutintegrals[5] + totalbackground)
+    SBerror = np.sqrt(((cutintegrals[5] + cutintegralserror[5]) / np.sqrt(cutintegrals[5] + cutintegralserror[5] + totalbackground) - SB)**2 + (cutintegrals[5] / np.sqrt(cutintegrals[5] + totalbackground + totalbackgrounderror) - SB)**2)
     
-    print("==========================================================\nAfter cut",cutcounter, "the yields are:\n")
-    print("Z+jets =",cutintegrals[0],"+-",cutintegralserror[0])
-    print("llvv =",cutintegrals[1],"+-",cutintegralserror[1])
-    print("other =",cutintegrals[2],"+-",cutintegralserror[2])
-    print("ttb/Wt =",cutintegrals[3],"+-",cutintegralserror[3])
-    print("diboson =",cutintegrals[4],"+-",cutintegralserror[4])
-    print("Total Background =",totalbackground,"+-",totalbackgrounderror)
-    print("ZH =",cutintegrals[5],"+-",cutintegralserror[5])
-    print("\nS/B =",cutintegrals[5]/totalbackground)
-    print("S/sqrt(S+B) = ",SB,"+-",SBerror)
+    print("==========================================================\nAfter cut", cutcounter, "the yields are:\n")
+    print("Z+jets =", cutintegrals[0], "+-", cutintegralserror[0])
+    print("llvv =", cutintegrals[1], "+-", cutintegralserror[1])
+    print("other =", cutintegrals[2], "+-", cutintegralserror[2])
+    print("ttb/Wt =", cutintegrals[3], "+-", cutintegralserror[3])
+    print("diboson =", cutintegrals[4], "+-", cutintegralserror[4])
+    print("Total Background =", totalbackground, "+-", totalbackgrounderror)
+    print("ZH =", cutintegrals[5], "+-", cutintegralserror[5])
+    print("\nS/B =", cutintegrals[5] / totalbackground)
+    print("S/sqrt(S+B) = ", SB, "+-", SBerror)
     print("==========================================================")
 
 
 counter = 0
 
 for var in varList:
-    leg = TLegend(0.58,0.7,0.68,0.9)
+    leg = TLegend(0.58, 0.7, 0.68, 0.9)
     leg.SetBorderSize(0)
     leg.SetTextSize(0.04)
     leg.SetEntrySeparation(0.3)
     leg.SetTextFont(20)
-    NNhistos=[]
-    histos=[]
-    legnames=[]
-    integrals=[]
-    maximum = -999.
+    NNhistos = []
+    histos = []
+    legnames = []
+    integrals = []
+    maximum = -999.0
 
     #read through signal and background files
     for sample in samples:
 
         for i in range(0, len(sample[1])):
-            infile = TFile.Open(sample[1][i],"READ")
+            infile = TFile.Open(sample[1][i], "READ")
             
             if (i == 0):
                 histo = infile.Get(var)
@@ -239,7 +235,7 @@ for var in varList:
         legName = sample[0]
         if (histo.Integral() > 0):
             integrals.append(histo.Integral(0, histo.GetNbinsX()+1))
-            histo.Scale(1/histo.Integral())
+            histo.Scale(1 / histo.Integral())
 
         if histo.GetMaximum() > maximum:
             maximum = histo.GetMaximum()
@@ -258,7 +254,7 @@ for var in varList:
         legnames.append(legName)
 
     #draw histograms
-    for i in range(0,len(histos)):
+    for i in range(0, len(histos)):
         if i == 0:
             histos[i].SetMaximum(maximum * 1.3)
             histos[i].Draw('hist')
@@ -273,10 +269,10 @@ for var in varList:
         #histos[i].GetXaxis().SetTitleSize(0.04)
         #histos[i].GetYaxis().SetTitleSize(0.04)
 
-        leg.AddEntry(histos[i],legnames[i],'l')
+        leg.AddEntry(histos[i], legnames[i], 'l')
 
     leg.Draw('SAME')
-    canv.SaveAs('ShapePlot_'+var+'.pdf')
+    canv.SaveAs('ShapePlot_' + var + '.pdf')
     canv.Clear()
 
     
@@ -287,7 +283,7 @@ for var in varList:
     #stackhistos[counter].GetXaxis().SetTitleSize(0.04)
     #stackhistos[counter].GetYaxis().SetTitleSize(0.04)
     leg.Draw('SAME')
-    canv.SaveAs('ShapePlot_stack'+var+'.pdf')
+    canv.SaveAs('ShapePlot_stack' + var + '.pdf')
     canv.Clear()
 
     counter += 1
@@ -298,8 +294,8 @@ phiB.SetLineColor(kBlack)
 phiS.SetLineColor(kRed)
 
 for i in range(0, phiS.GetNbinsX()+1):
-    if (phiS.GetBinContent(i)+phiB.GetBinContent(i)) != 0:
-        ratio = phiS.GetBinContent(i)/sqrt(phiS.GetBinContent(i)+phiB.GetBinContent(i))
+    if (phiS.GetBinContent(i) + phiB.GetBinContent(i)) != 0:
+        ratio = phiS.GetBinContent(i) / np.sqrt(phiS.GetBinContent(i) + phiB.GetBinContent(i))
     else:
         ratio = 0
     phiratio.SetBinContent(i, ratio)
