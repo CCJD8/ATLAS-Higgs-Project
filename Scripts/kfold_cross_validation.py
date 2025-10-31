@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 import uproot
-from ROOT import *
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split, KFold
 from sklearn.metrics import accuracy_score
 from keras.models import Sequential
 from keras.layers import Dense
+from ROOT import *
 
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasStyle.C')
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasUtils.C')
