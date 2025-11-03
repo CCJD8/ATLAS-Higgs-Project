@@ -3,6 +3,7 @@ import ctypes
 import numpy as np
 from ROOT import *
 
+# ===== Style and batch mode =====
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasStyle.C')
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasUtils.C')
 gROOT.SetBatch(kTRUE)
@@ -10,20 +11,19 @@ SetAtlasStyle()
 
 PI = math.pi
 
-
+# ===== ROOT canvas and pad setup =====
 canv = TCanvas('c', 'c', 800, 800)
 canv.cd()
 
-newpad = TPad("newpad", "Transparent pad", 0, 0, 1, 1, -1, 300, 1)
-newpad.SetFillStyle(4000)
-newpad.Draw()
-newpad.cd()
-newpad.GetFrame().SetBorderSize(200)
+overlay = TPad("overlay", "Transparent pad", 0, 0, 1, 1, -1, 300, 1)
+overlay.SetFillStyle(4000)
+overlay.Draw()
+overlay.cd()
+overlay.GetFrame().SetBorderSize(200)
 
-color_list = [kBlack, kRed, kBlue, kGreen, kViolet, kMagenta, kAzure, kViolet, kOrange, kYellow, kMagenta+3, kCyan, kYellow+2]
-
-# Data files split into groups based on the physical process modelled (Z+jets, llvv, ttb/Wt, diboson, ZH, other)
-samples = [
+# ===== Samples =====
+# Grouped on the physical process modelled (Z+jets, llvv, other, ttb/Wt, diboson, ZH)
+samples_group_by_process = [
     ("Z+jets", ["364100.Sh221_PDF30_Zmumu_MV0_70_CVBV.root","364101.Sh221_PDF30_Zmumu_MV0_70_CFBV.root","364102.Sh221_PDF30_Zmumu_MV0_70_BF.root","364103.Sh221_PDF30_Zmumu_MV70_140_CVBV.root","364104.Sh221_PDF30_Zmumu_MV70_140_CFBV.root","364105.Sh221_PDF30_Zmumu_MV70_140_BF.root","364106.Sh221_PDF30_Zmumu_MV140_280_CVBV.root","364107.Sh221_PDF30_Zmumu_MV140_280_CFBV.root","364108.Sh221_PDF30_Zmumu_MV140_280_BF.root","364109.Sh221_PDF30_Zmumu_MV280_500_CVBV.root","364110.Sh221_PDF30_Zmumu_MV280_500_CFBV.root","364111.Sh221_PDF30_Zmumu_MV280_500_BF.root","364112.Sh221_PDF30_Zmumu_MV500_1000.root","364113.Sh221_PDF30_Zmumu_MV1000_E_CMS.root","364114.Sh221_PDF30_Zee_MV0_70_CVBV.root","364115.Sh221_PDF30_Zee_MV0_70_CFBV.root","364116.Sh221_PDF30_Zee_MV0_70_BF.root","364117.Sh221_PDF30_Zee_MV70_140_CVBV.root","364118.Sh221_PDF30_Zee_MV70_140_CFBV.root","364119.Sh221_PDF30_Zee_MV70_140_BF.root","364120.Sh221_PDF30_Zee_MV140_280_CVBV.root","364121.Sh221_PDF30_Zee_MV140_280_CFBV.root","364122.Sh221_PDF30_Zee_MV140_280_BF.root","364123.Sh221_PDF30_Zee_MV280_500_CVBV.root","364124.Sh221_PDF30_Zee_MV280_500_CFBV.root","364125.Sh221_PDF30_Zee_MV280_500_BF.root","364126.Sh221_PDF30_Zee_MV500_1000.root","364127.Sh221_PDF30_Zee_MV1000_E_CMS.root","364128.Sh221_PDF30_Ztt_MV0_70_CVBV.root","364129.Sh221_PDF30_Ztt_MV0_70_CFBV.root","364130.Sh221_PDF30_Ztt_MV0_70_BF.root","364131.Sh221_PDF30_Ztt_MV70_140_CVBV.root","364132.Sh221_PDF30_Ztt_MV70_140_CFBV.root","364133.Sh221_PDF30_Ztt_MV70_140_BF.root","364134.Sh221_PDF30_Ztt_MV140_280_CVBV.root","364135.Sh221_PDF30_Ztt_MV140_280_CFBV.root","364136.Sh221_PDF30_Ztt_MV140_280_BF.root","364137.Sh221_PDF30_Ztt_MV280_500_CVBV.root","364138.Sh221_PDF30_Ztt_MV280_500_CFBV.root","364139.Sh221_PDF30_Ztt_MV280_500_BF.root","364140.Sh221_PDF30_Ztt_MV500_1000.root","364141.Sh221_PDF30_Ztt_MV1000_E_CMS.root","364216.Sh221_PDF30_Zmumu_PTV500_1000.root","364217.Sh221_PDF30_Zmumu_PTV1000_E_CMS.root","364218.Sh221_PDF30_Zee_PTV500_1000.root","364219.Sh221_PDF30_Zee_PTV1000_E_CMS.root","364220.Sh221_PDF30_Ztt_PTV500_1000.root","364221.Sh221_PDF30_Ztt_PTV1000_E_CMS.root"], kYellow),
     ("llvv", ["364254.Sh222_PDF30_llvv.root","364285.Sh222_PDF30_llvvjj_EW6.root","364286.Sh222_PDF30_llvvjj_ss_EW4.root","366088.Sh_222__llvvjj_ss_Min_N_TChannel.root"], kOrange+1),
     ("other", ["410218.aMcNloPy8_MEN30NLO_ttee.root","410219.aMcNloPy8_MEN30NLO_ttmumu.root","364244.Sh222_PDF30_WWZ_2l4v_EW6.root","364249.Sh222_PDF30_ZZZ_2l4v_EW6.root"], kRed),
@@ -31,14 +31,39 @@ samples = [
     ("diboson", ["700492.Sh_2211_WqqZll.root","700493.Sh_2211_ZqqZll.root","700494.Sh_2211_ZbbZll.root","364302.Sh222_PDF30_ggZllZqq.root"], kRed+2),
     ("ZH", ["345055.PoPy8_NNPDF3__ZH125J_MINLO_llbb_VpT.root","345057.PoPy8_NNPDF3__ggZH125_llbb.root"], kBlack)]
 
-# Data files split into two groups for either signal or background process (signal: ZH || background: Z+jets, llvv, ttb/Wt, diboson, other)
-samples_sig_back = [
+# Grouped signal or background process (Signal, Background)
+samples_group_by_sb = [
     ("Signal", ["345055.PoPy8_NNPDF3__ZH125J_MINLO_llbb_VpT.root","345057.PoPy8_NNPDF3__ggZH125_llbb.root"], kRed), 
     ("Background", ["364100.Sh221_PDF30_Zmumu_MV0_70_CVBV.root","364101.Sh221_PDF30_Zmumu_MV0_70_CFBV.root","364102.Sh221_PDF30_Zmumu_MV0_70_BF.root","364103.Sh221_PDF30_Zmumu_MV70_140_CVBV.root","364104.Sh221_PDF30_Zmumu_MV70_140_CFBV.root","364105.Sh221_PDF30_Zmumu_MV70_140_BF.root","364106.Sh221_PDF30_Zmumu_MV140_280_CVBV.root","364107.Sh221_PDF30_Zmumu_MV140_280_CFBV.root","364108.Sh221_PDF30_Zmumu_MV140_280_BF.root","364109.Sh221_PDF30_Zmumu_MV280_500_CVBV.root","364110.Sh221_PDF30_Zmumu_MV280_500_CFBV.root","364111.Sh221_PDF30_Zmumu_MV280_500_BF.root","364112.Sh221_PDF30_Zmumu_MV500_1000.root","364113.Sh221_PDF30_Zmumu_MV1000_E_CMS.root","364114.Sh221_PDF30_Zee_MV0_70_CVBV.root","364115.Sh221_PDF30_Zee_MV0_70_CFBV.root","364116.Sh221_PDF30_Zee_MV0_70_BF.root","364117.Sh221_PDF30_Zee_MV70_140_CVBV.root","364118.Sh221_PDF30_Zee_MV70_140_CFBV.root","364119.Sh221_PDF30_Zee_MV70_140_BF.root","364120.Sh221_PDF30_Zee_MV140_280_CVBV.root","364121.Sh221_PDF30_Zee_MV140_280_CFBV.root","364122.Sh221_PDF30_Zee_MV140_280_BF.root","364123.Sh221_PDF30_Zee_MV280_500_CVBV.root","364124.Sh221_PDF30_Zee_MV280_500_CFBV.root","364125.Sh221_PDF30_Zee_MV280_500_BF.root","364126.Sh221_PDF30_Zee_MV500_1000.root","364127.Sh221_PDF30_Zee_MV1000_E_CMS.root","364128.Sh221_PDF30_Ztt_MV0_70_CVBV.root","364129.Sh221_PDF30_Ztt_MV0_70_CFBV.root","364130.Sh221_PDF30_Ztt_MV0_70_BF.root","364131.Sh221_PDF30_Ztt_MV70_140_CVBV.root","364132.Sh221_PDF30_Ztt_MV70_140_CFBV.root","364133.Sh221_PDF30_Ztt_MV70_140_BF.root","364134.Sh221_PDF30_Ztt_MV140_280_CVBV.root","364135.Sh221_PDF30_Ztt_MV140_280_CFBV.root","364136.Sh221_PDF30_Ztt_MV140_280_BF.root","364137.Sh221_PDF30_Ztt_MV280_500_CVBV.root","364138.Sh221_PDF30_Ztt_MV280_500_CFBV.root","364139.Sh221_PDF30_Ztt_MV280_500_BF.root","364140.Sh221_PDF30_Ztt_MV500_1000.root","364141.Sh221_PDF30_Ztt_MV1000_E_CMS.root","364216.Sh221_PDF30_Zmumu_PTV500_1000.root","364217.Sh221_PDF30_Zmumu_PTV1000_E_CMS.root","364218.Sh221_PDF30_Zee_PTV500_1000.root","364219.Sh221_PDF30_Zee_PTV1000_E_CMS.root","364220.Sh221_PDF30_Ztt_PTV500_1000.root","364221.Sh221_PDF30_Ztt_PTV1000_E_CMS.root","364254.Sh222_PDF30_llvv.root","364285.Sh222_PDF30_llvvjj_EW6.root","364286.Sh222_PDF30_llvvjj_ss_EW4.root","366088.Sh_222__llvvjj_ss_Min_N_TChannel.root","410218.aMcNloPy8_MEN30NLO_ttee.root","410219.aMcNloPy8_MEN30NLO_ttmumu.root","364244.Sh222_PDF30_WWZ_2l4v_EW6.root","364249.Sh222_PDF30_ZZZ_2l4v_EW6.root","410472.PhPy8_A14_ttb_dil.root","410648.PoPy8_A14_Wt_DR_dilepton_top.root","410649.PoPy8_A14_Wt_DR_dilepton_atop.root","700492.Sh_2211_WqqZll.root","700493.Sh_2211_ZqqZll.root","700494.Sh_2211_ZbbZll.root","364302.Sh222_PDF30_ggZllZqq.root"], kBlack)]
 
-integral_yields = ['c1lep0_pt', 'c2lep0_pt', 'c3lep0_pt', 'c4lep0_pt', 'c5lep0_pt']
-
+# ===== Features =====
 feature_list = ['lep0_pt', 'lep1_pt', 'jet0_pt', 'jet1_pt', 'mll', 'mbb', 'pTdilep', 'deltaRjets', 'etabb', 'etall', 'n_jets', 'phibb', 'phill', 'metpt', 'cosll', 'coslminus', 'signedphi']
+yield_feature_list = ['c1lep0_pt', 'c2lep0_pt', 'c3lep0_pt', 'c4lep0_pt', 'c5lep0_pt']
+
+# ===== Helper Functions =====
+def load_hist(files, var):
+    """
+    Get histogram for a particular feature (e.g. pTl0) with data from the files given in the files list.
+    
+    Args:
+        files [str] - list of *.root files to be read (e.g. ["file_1.root","file_2.root"])
+        var (str) - name of feature to be read from *.root file (e.g. "mbb")
+        
+    Returns:
+        h_sum - TH1D histogram object of a particular feature (e.g. mbb) filled with data from the *.root files in files.
+    """
+    h_sum = None
+    for path in files:
+        f = TFile.Open(path, "READ")
+        h. f.Get(var)
+        if h_sum is None:
+            h_sum = h.Clone()
+            h_sum.SetDirectory(0)
+        else:
+            h_sum.Add(h)
+        f.Close()
+    return h_sum
+
 
 stack_pTl0 = THStack("stack_pTl0", "Stack plot; Transverse momentum [GeV]; Counts")
 stack_pTl1 = THStack("stack_pTl1", "Stack plot; Transverse momentum [GeV]; Counts")
@@ -57,6 +82,7 @@ stack_metpt = THStack("stack_metpt", "Missing transverse energy; Missing transve
 stack_cosll = THStack("stack_cosll", "Cosine of angle between leptons; Cos(#Delta#phi); Counts")
 stack_coslminus = THStack("stack_coslminus", "Cosine of angle from negative lepton; Cos(#Delta#phi); Counts")
 stack_signedphi = THStack("signedphi", "Signed #phi; Signed #phi; Counts")
+stack_histograms = [stack_pTl0, stack_pTl1, stack_pTj0, stack_pTj1, stack_mll, stack_mbb, stack_pTdilep, stack_deltaRjets, stack_etabb, stack_etall, stack_n_jets, stack_phibb, stack_phill, stack_metpt, stack_cosll, stack_coslminus, stack_signedphi]
 
 phiB = TH1D("phiB", "phiB; Signed #Delta#phi (ll); S/sqrt(S+B)", 8, -PI, PI)
 phiB.Sumw2()
@@ -65,26 +91,80 @@ phiS.Sumw2()
 phiratio = TH1D("phiratio", "phiratio; Signed #Delta#phi (ll); S/sqrt(S+B)", 8, -PI, PI)
 phiratio.Sumw2()
 
-stack_histograms = [stack_pTl0, stack_pTl1, stack_pTj0, stack_pTj1, stack_mll, stack_mbb, stack_pTdilep, stack_deltaRjets, stack_etabb, stack_etall, stack_n_jets, stack_phibb, stack_phill, stack_metpt, stack_cosll, stack_coslminus, stack_signedphi]
- 
-cutcounter = 0
+legend = TLegend(0.42, 0.8, 0.72, 0.9)
+legend.SetBorderSize(0)
+legend.SetTextSize(0.04)
+legend.SetEntrySeparation(0.3)
+legend.SetTextFont(20)
+
+for var in feature_list:
+    nn_histos = []
+    histos = []
+    leg_names = []
+    integrals = []
+    
+    # Iterate over each sample group
+    # sample is a tuple of form: (label, list_of_files, color)
+    #                              [0]        [1]        [2]
+    for sample in samples_group_by_process:        
+        histo = load_hist(sample[1], var)
+        histo.SetMarkerColor(sample[2])
+        histo.SetLineColor(sample[2])
+        histo.SetLineWidth(3)
+        
+        nn_histo = histo.Clone()
+        nn_histo.SetDirectory(0)
+    
+        if (histo.Integral() > 0):
+            integrals.append(histo.Integral(0, histo.GetNbinsX()+1))
+            histo.Scale(1 / histo.Integral())
+
+        if histo.GetMaximum() > maximum:
+            maximum = histo.GetMaximum()
+        
+        histos.append(histo)
+        nn_histos.append(nn_histo)
+        leg_names.append(sample[0])
+
+    # Draw histograms    
+    for i, _ in enumerate(histos):
+        if i == 0:
+            histos[i].SetMaximum(maximum * 1.3)
+            histos[i].Draw('hist')
+            stack_histograms[counter].Add(nn_histos[i])
+        else:
+            histos[i].Draw('histSAME')
+            stack_histograms[counter].Add(nn_histos[i])
+
+        histos[i].GetYaxis().SetTitleOffset(1.6)
+        legend.AddEntry(histos[i], leg_names[i], 'l')
+        
+        
+    legend.Draw('SAME')
+    canv.SaveAs('ShapePlot_' + var + '.pdf')
+    canv.Clear()
+
+    stack_histograms[counter].Draw('hist')
+    stack_histograms[counter].GetYaxis().SetTitleOffset(1.81)
+    legend.Draw('SAME')
+    canv.SaveAs('ShapePlot_stack' + var + '.pdf')
+    canv.Clear()
+
+    counter += 1
+
 
 # Creating signal/background ratio plots
 for var in feature_list:
-    legend = TLegend(0.42, 0.8, 0.72, 0.9)
-    legend.SetBorderSize(0)
-    legend.SetTextSize(0.04)
-    legend.SetEntrySeparation(0.3)
-    legend.SetTextFont(20)
     maximum = -999.0
-
-    # Iterate over each tuple where each sample is (label, list_of_files, color)
-    for sample in samples_sig_back:
-        no_of_root_files = len(sample[1])
+    
+    # Iterate over each sample group
+    # sample is a tuple of form: (label, list_of_files, color)
+    #                              [0]        [1]        [2]
+    for sample in samples_group_by_sb:
         
         # Signal histogram
         if sample[0] == "Signal":
-            for i in range(0, len(sample[1])):
+            for i, _ in enumerate(sample[1]):
                 infile = TFile.Open(sample[1][i], "READ")
                 
                 if (i == 0):
@@ -159,138 +239,41 @@ for var in feature_list:
     canv.Clear()
 
 
+cut_counter = 0
 
 # Calculating yields after successive selection cuts
-for var in integral_yields:
-    cuthistos = []
-    cutintegrals = []
-    cutintegralserror = []
+for var in yield_feature_list:
+    cut_integrals = []
+    cut_integrals_error = []
+    maximum = -999.0
 
-    for sample in samples:
-        for i in range(0, len(sample[1])):
-            infile = TFile.Open(sample[1][i], "READ")
-            if (i == 0):
-                histo = infile.Get(var)
-                histo.SetDirectory(0)
-            else:
-                histo.Add(infile.Get(var))
-        infile.Close()
-
-        cutintegrals.append(histo.Integral(0, histo.GetNbinsX()+1))
-
-        ####################################################################################################
+    for sample in samples_group_by_process:
+        histo = load_hist(sample[1], var)
+        cut_integrals.append(histo.Integral(0, histo.GetNbinsX()+1))
         error = ctypes.c_double()
         integral = histo.IntegralAndError(0, histo.GetNbinsX()+1, error)
-        cutintegralserror.append(error.value)
+        cut_integrals_error.append(error.value)
     
-    cutcounter += 1
+    cut_counter += 1
     
-    totalbackground = cutintegrals[0] + cutintegrals[1] + cutintegrals[2] + cutintegrals[3] + cutintegrals[4]
-    totalbackgrounderror = np.sqrt(cutintegralserror[0]**2 + cutintegralserror[2]**2 + cutintegralserror[2]**2 + cutintegralserror[3]**2 + cutintegralserror[4]**2)
-    SB = cutintegrals[5] / np.sqrt(cutintegrals[5] + totalbackground)
-    SBerror = np.sqrt(((cutintegrals[5] + cutintegralserror[5]) / np.sqrt(cutintegrals[5] + cutintegralserror[5] + totalbackground) - SB)**2 + (cutintegrals[5] / np.sqrt(cutintegrals[5] + totalbackground + totalbackgrounderror) - SB)**2)
+    total_background = cut_integrals[0] + cut_integrals[1] + cut_integrals[2] + cut_integrals[3] + cut_integrals[4]
+    total_background_error = np.sqrt(cut_integrals_error[0]**2 + cut_integrals_error[2]**2 + cut_integrals_error[2]**2 + cut_integrals_error[3]**2 + cut_integrals_error[4]**2)
+    SB = cut_integrals[5] / np.sqrt(cut_integrals[5] + total_background)
+    SBerror = np.sqrt(((cut_integrals[5] + cut_integrals_error[5]) / np.sqrt(cut_integrals[5] + cut_integrals_error[5] + total_background) - SB)**2 + (cut_integrals[5] / np.sqrt(cut_integrals[5] + total_background + total_background_error) - SB)**2)
     
-    print("==========================================================\nAfter cut", cutcounter, "the yields are:\n")
-    print("Z+jets =", cutintegrals[0], "+-", cutintegralserror[0])
-    print("llvv =", cutintegrals[1], "+-", cutintegralserror[1])
-    print("other =", cutintegrals[2], "+-", cutintegralserror[2])
-    print("ttb/Wt =", cutintegrals[3], "+-", cutintegralserror[3])
-    print("diboson =", cutintegrals[4], "+-", cutintegralserror[4])
-    print("Total Background =", totalbackground, "+-", totalbackgrounderror)
-    print("ZH =", cutintegrals[5], "+-", cutintegralserror[5])
-    print("\nS/B =", cutintegrals[5] / totalbackground)
+    print("==========================================================\nAfter cut", cut_counter, "the yields are:\n")
+    print("Z+jets =", cut_integrals[0], "+-", cut_integrals_error[0])
+    print("llvv =", cut_integrals[1], "+-", cut_integrals_error[1])
+    print("other =", cut_integrals[2], "+-", cut_integrals_error[2])
+    print("ttb/Wt =", cut_integrals[3], "+-", cut_integrals_error[3])
+    print("diboson =", cut_integrals[4], "+-", cut_integrals_error[4])
+    print("Total Background =", total_background, "+-", total_background_error)
+    print("ZH =", cut_integrals[5], "+-", cut_integrals_error[5])
+    print("\nS/B =", cut_integrals[5] / total_background)
     print("S/sqrt(S+B) = ", SB, "+-", SBerror)
     print("==========================================================")
 
 
-counter = 0
-
-for var in feature_list:
-    legend = TLegend(0.58, 0.7, 0.68, 0.9)
-    legend.SetBorderSize(0)
-    legend.SetTextSize(0.04)
-    legend.SetEntrySeparation(0.3)
-    legend.SetTextFont(20)
-    NNhistos = []
-    histos = []
-    legnames = []
-    integrals = []
-    maximum = -999.0
-
-    #read through signal and background files
-    for sample in samples:
-
-        for i in range(0, len(sample[1])):
-            infile = TFile.Open(sample[1][i], "READ")
-            
-            if (i == 0):
-                histo = infile.Get(var)
-                histo.SetDirectory(0)
-            else:
-                histo.Add(infile.Get(var))
-                
-        
-        infile.Close()
-        
-        NNhisto = histo.Clone()
-        NNhisto.SetDirectory(0)
-        
-
-        legName = sample[0]
-        if (histo.Integral() > 0):
-            integrals.append(histo.Integral(0, histo.GetNbinsX()+1))
-            histo.Scale(1 / histo.Integral())
-
-        if histo.GetMaximum() > maximum:
-            maximum = histo.GetMaximum()
-
-        histo.SetMarkerColor(sample[2])
-        histo.SetLineColor(sample[2])
-        histo.SetLineWidth(3)
-        histos.append(histo)
-
-        NNhisto.SetMarkerColor(sample[2])
-        NNhisto.SetLineColor(sample[2]) #original sample[2]
-        NNhisto.SetLineWidth(3)
-        NNhisto.SetFillColor(sample[2])
-        NNhistos.append(NNhisto)
-
-        legnames.append(legName)
-
-    #draw histograms
-    for i in range(0, len(histos)):
-        if i == 0:
-            histos[i].SetMaximum(maximum * 1.3)
-            histos[i].Draw('hist')
-            stack_histograms[counter].Add(NNhistos[i])
-        else:
-            histos[i].Draw('histSAME')
-            stack_histograms[counter].Add(NNhistos[i])
-
-        histos[i].GetYaxis().SetTitleOffset(1.6)
-        #histos[i].GetXaxis().SetLabelSize(0.04)
-        #histos[i].GetYaxis().SetLabelSize(0.04)
-        #histos[i].GetXaxis().SetTitleSize(0.04)
-        #histos[i].GetYaxis().SetTitleSize(0.04)
-
-        legend.AddEntry(histos[i], legnames[i], 'l')
-
-    legend.Draw('SAME')
-    canv.SaveAs('ShapePlot_' + var + '.pdf')
-    canv.Clear()
-
-    
-    stack_histograms[counter].Draw('hist')
-    stack_histograms[counter].GetYaxis().SetTitleOffset(1.81)
-    #stack_histograms[counter].GetXaxis().SetLabelSize(0.04)
-    #stack_histograms[counter].GetYaxis().SetLabelSize(0.04)
-    #stack_histograms[counter].GetXaxis().SetTitleSize(0.04)
-    #stack_histograms[counter].GetYaxis().SetTitleSize(0.04)
-    legend.Draw('SAME')
-    canv.SaveAs('ShapePlot_stack' + var + '.pdf')
-    canv.Clear()
-
-    counter += 1
 
 # SIGNED PHI SIGNIFICANCE SCAN
 
