@@ -1,5 +1,5 @@
 ## ATLAS-Higgs-Project
-This repository hosts the programs used in the project I worked on in 2023 "background reduction for the Higgs' associated ZH production and subsequent b-quark decay channel using deep neural networks trained on Standard Model generated data for the ATLAS detector".
+This repository hosts the programs used in the project I worked on in 2023 "background reduction for the Higgs' associated ZH production and subsequent b-quark decay channel using deep neural networks trained on Standard Model generated data for the ATLAS detector". The code has been refactored more recently to be more easily understood and read by others.
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/d00bd5cd-8cf7-44ec-9184-932aa99f61e6" alt="Tree-level-Feynman-diagram-of-the-associated-production-of-Higgs-boson" width="383" height="211"/>
