@@ -70,7 +70,7 @@ for i, (train, test) in enumerate(kfold.split(X)):
     model.add(Dense(6, activation='elu'))
     model.add(Dense(1, activation='sigmoid'))
 
-    # Specify the training configuration (loss function, optimizer, metrics to monitor
+    # Specify the training configuration (loss function, optimizer, metrics to monitor)
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     # Training with fit() which slices data into batches and iterates over dataset for x epochs. history object stores training metrics (loss, metric values) per epoch
