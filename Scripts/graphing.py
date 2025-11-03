@@ -65,6 +65,7 @@ def load_hist(files, var):
     return h_sum
 
 
+# Set up histogram objects
 stack_pTl0 = THStack("stack_pTl0", "Stack plot; Transverse momentum [GeV]; Counts")
 stack_pTl1 = THStack("stack_pTl1", "Stack plot; Transverse momentum [GeV]; Counts")
 stack_pTj0 = THStack("stack_pTj0", "Stack plot; Transverse momentum [GeV]; Counts")
@@ -97,6 +98,7 @@ legend.SetTextSize(0.04)
 legend.SetEntrySeparation(0.3)
 legend.SetTextFont(20)
 
+# Iterate over each feature to create shape and stack plots 
 for var in feature_list:
     nn_histos = []
     histos = []
@@ -153,7 +155,7 @@ for var in feature_list:
     counter += 1
 
 
-# Creating signal/background ratio plots
+# Iterate over each feature to create signal/background ratio plots
 for var in feature_list:
     maximum = -999.0
     
@@ -239,29 +241,28 @@ for var in feature_list:
     canv.Clear()
 
 
-cut_counter = 0
-
-# Calculating yields after successive selection cuts
-for var in yield_feature_list:
+# Iterate over each feature to caluculate yields after successive selection cuts
+for i, var in enumerate(yield_feature_list):
     cut_integrals = []
     cut_integrals_error = []
     maximum = -999.0
 
+    # Iterate over each sample group
+    # sample is a tuple of form: (label, list_of_files, color)
+    #                              [0]        [1]        [2]
     for sample in samples_group_by_process:
         histo = load_hist(sample[1], var)
         cut_integrals.append(histo.Integral(0, histo.GetNbinsX()+1))
         error = ctypes.c_double()
         integral = histo.IntegralAndError(0, histo.GetNbinsX()+1, error)
         cut_integrals_error.append(error.value)
-    
-    cut_counter += 1
-    
+        
     total_background = cut_integrals[0] + cut_integrals[1] + cut_integrals[2] + cut_integrals[3] + cut_integrals[4]
     total_background_error = np.sqrt(cut_integrals_error[0]**2 + cut_integrals_error[2]**2 + cut_integrals_error[2]**2 + cut_integrals_error[3]**2 + cut_integrals_error[4]**2)
     SB = cut_integrals[5] / np.sqrt(cut_integrals[5] + total_background)
     SBerror = np.sqrt(((cut_integrals[5] + cut_integrals_error[5]) / np.sqrt(cut_integrals[5] + cut_integrals_error[5] + total_background) - SB)**2 + (cut_integrals[5] / np.sqrt(cut_integrals[5] + total_background + total_background_error) - SB)**2)
     
-    print("==========================================================\nAfter cut", cut_counter, "the yields are:\n")
+    print("==========================================================\nAfter cut", i, "the yields are:\n")
     print("Z+jets =", cut_integrals[0], "+-", cut_integrals_error[0])
     print("llvv =", cut_integrals[1], "+-", cut_integrals_error[1])
     print("other =", cut_integrals[2], "+-", cut_integrals_error[2])
@@ -274,9 +275,7 @@ for var in yield_feature_list:
     print("==========================================================")
 
 
-
-# SIGNED PHI SIGNIFICANCE SCAN
-
+# Significance scan for signed phi
 phiB.SetLineColor(kBlack)
 phiS.SetLineColor(kRed)
 
