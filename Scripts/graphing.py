@@ -3,7 +3,7 @@ import ctypes
 import numpy as np
 from ROOT import *
 
-# ===== Style and batch mode =====
+# Style and batch mode
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasStyle.C')
 gROOT.LoadMacro('/home/connor/atlasrootstyle/atlasrootstyle/AtlasUtils.C')
 gROOT.SetBatch(kTRUE)
@@ -11,7 +11,7 @@ SetAtlasStyle()
 
 PI = math.pi
 
-# ===== ROOT canvas and pad setup =====
+# ROOT canvas and pad setup
 canv = TCanvas('c', 'c', 800, 800)
 canv.cd()
 
@@ -21,8 +21,7 @@ overlay.Draw()
 overlay.cd()
 overlay.GetFrame().SetBorderSize(200)
 
-# ===== Samples =====
-# Grouped on the physical process modelled (Z+jets, llvv, other, ttb/Wt, diboson, ZH)
+# Samples grouped on the physical process modelled (Z+jets, llvv, other, ttb/Wt, diboson, ZH)
 samples_group_by_process = [
     ("Z+jets", ["364100.Sh221_PDF30_Zmumu_MV0_70_CVBV.root","364101.Sh221_PDF30_Zmumu_MV0_70_CFBV.root","364102.Sh221_PDF30_Zmumu_MV0_70_BF.root","364103.Sh221_PDF30_Zmumu_MV70_140_CVBV.root","364104.Sh221_PDF30_Zmumu_MV70_140_CFBV.root","364105.Sh221_PDF30_Zmumu_MV70_140_BF.root","364106.Sh221_PDF30_Zmumu_MV140_280_CVBV.root","364107.Sh221_PDF30_Zmumu_MV140_280_CFBV.root","364108.Sh221_PDF30_Zmumu_MV140_280_BF.root","364109.Sh221_PDF30_Zmumu_MV280_500_CVBV.root","364110.Sh221_PDF30_Zmumu_MV280_500_CFBV.root","364111.Sh221_PDF30_Zmumu_MV280_500_BF.root","364112.Sh221_PDF30_Zmumu_MV500_1000.root","364113.Sh221_PDF30_Zmumu_MV1000_E_CMS.root","364114.Sh221_PDF30_Zee_MV0_70_CVBV.root","364115.Sh221_PDF30_Zee_MV0_70_CFBV.root","364116.Sh221_PDF30_Zee_MV0_70_BF.root","364117.Sh221_PDF30_Zee_MV70_140_CVBV.root","364118.Sh221_PDF30_Zee_MV70_140_CFBV.root","364119.Sh221_PDF30_Zee_MV70_140_BF.root","364120.Sh221_PDF30_Zee_MV140_280_CVBV.root","364121.Sh221_PDF30_Zee_MV140_280_CFBV.root","364122.Sh221_PDF30_Zee_MV140_280_BF.root","364123.Sh221_PDF30_Zee_MV280_500_CVBV.root","364124.Sh221_PDF30_Zee_MV280_500_CFBV.root","364125.Sh221_PDF30_Zee_MV280_500_BF.root","364126.Sh221_PDF30_Zee_MV500_1000.root","364127.Sh221_PDF30_Zee_MV1000_E_CMS.root","364128.Sh221_PDF30_Ztt_MV0_70_CVBV.root","364129.Sh221_PDF30_Ztt_MV0_70_CFBV.root","364130.Sh221_PDF30_Ztt_MV0_70_BF.root","364131.Sh221_PDF30_Ztt_MV70_140_CVBV.root","364132.Sh221_PDF30_Ztt_MV70_140_CFBV.root","364133.Sh221_PDF30_Ztt_MV70_140_BF.root","364134.Sh221_PDF30_Ztt_MV140_280_CVBV.root","364135.Sh221_PDF30_Ztt_MV140_280_CFBV.root","364136.Sh221_PDF30_Ztt_MV140_280_BF.root","364137.Sh221_PDF30_Ztt_MV280_500_CVBV.root","364138.Sh221_PDF30_Ztt_MV280_500_CFBV.root","364139.Sh221_PDF30_Ztt_MV280_500_BF.root","364140.Sh221_PDF30_Ztt_MV500_1000.root","364141.Sh221_PDF30_Ztt_MV1000_E_CMS.root","364216.Sh221_PDF30_Zmumu_PTV500_1000.root","364217.Sh221_PDF30_Zmumu_PTV1000_E_CMS.root","364218.Sh221_PDF30_Zee_PTV500_1000.root","364219.Sh221_PDF30_Zee_PTV1000_E_CMS.root","364220.Sh221_PDF30_Ztt_PTV500_1000.root","364221.Sh221_PDF30_Ztt_PTV1000_E_CMS.root"], kYellow),
     ("llvv", ["364254.Sh222_PDF30_llvv.root","364285.Sh222_PDF30_llvvjj_EW6.root","364286.Sh222_PDF30_llvvjj_ss_EW4.root","366088.Sh_222__llvvjj_ss_Min_N_TChannel.root"], kOrange+1),
@@ -31,16 +30,16 @@ samples_group_by_process = [
     ("diboson", ["700492.Sh_2211_WqqZll.root","700493.Sh_2211_ZqqZll.root","700494.Sh_2211_ZbbZll.root","364302.Sh222_PDF30_ggZllZqq.root"], kRed+2),
     ("ZH", ["345055.PoPy8_NNPDF3__ZH125J_MINLO_llbb_VpT.root","345057.PoPy8_NNPDF3__ggZH125_llbb.root"], kBlack)]
 
-# Grouped signal or background process (Signal, Background)
+# Samples grouped signal or background process (Signal, Background)
 samples_group_by_sb = [
     ("Signal", ["345055.PoPy8_NNPDF3__ZH125J_MINLO_llbb_VpT.root","345057.PoPy8_NNPDF3__ggZH125_llbb.root"], kRed), 
     ("Background", ["364100.Sh221_PDF30_Zmumu_MV0_70_CVBV.root","364101.Sh221_PDF30_Zmumu_MV0_70_CFBV.root","364102.Sh221_PDF30_Zmumu_MV0_70_BF.root","364103.Sh221_PDF30_Zmumu_MV70_140_CVBV.root","364104.Sh221_PDF30_Zmumu_MV70_140_CFBV.root","364105.Sh221_PDF30_Zmumu_MV70_140_BF.root","364106.Sh221_PDF30_Zmumu_MV140_280_CVBV.root","364107.Sh221_PDF30_Zmumu_MV140_280_CFBV.root","364108.Sh221_PDF30_Zmumu_MV140_280_BF.root","364109.Sh221_PDF30_Zmumu_MV280_500_CVBV.root","364110.Sh221_PDF30_Zmumu_MV280_500_CFBV.root","364111.Sh221_PDF30_Zmumu_MV280_500_BF.root","364112.Sh221_PDF30_Zmumu_MV500_1000.root","364113.Sh221_PDF30_Zmumu_MV1000_E_CMS.root","364114.Sh221_PDF30_Zee_MV0_70_CVBV.root","364115.Sh221_PDF30_Zee_MV0_70_CFBV.root","364116.Sh221_PDF30_Zee_MV0_70_BF.root","364117.Sh221_PDF30_Zee_MV70_140_CVBV.root","364118.Sh221_PDF30_Zee_MV70_140_CFBV.root","364119.Sh221_PDF30_Zee_MV70_140_BF.root","364120.Sh221_PDF30_Zee_MV140_280_CVBV.root","364121.Sh221_PDF30_Zee_MV140_280_CFBV.root","364122.Sh221_PDF30_Zee_MV140_280_BF.root","364123.Sh221_PDF30_Zee_MV280_500_CVBV.root","364124.Sh221_PDF30_Zee_MV280_500_CFBV.root","364125.Sh221_PDF30_Zee_MV280_500_BF.root","364126.Sh221_PDF30_Zee_MV500_1000.root","364127.Sh221_PDF30_Zee_MV1000_E_CMS.root","364128.Sh221_PDF30_Ztt_MV0_70_CVBV.root","364129.Sh221_PDF30_Ztt_MV0_70_CFBV.root","364130.Sh221_PDF30_Ztt_MV0_70_BF.root","364131.Sh221_PDF30_Ztt_MV70_140_CVBV.root","364132.Sh221_PDF30_Ztt_MV70_140_CFBV.root","364133.Sh221_PDF30_Ztt_MV70_140_BF.root","364134.Sh221_PDF30_Ztt_MV140_280_CVBV.root","364135.Sh221_PDF30_Ztt_MV140_280_CFBV.root","364136.Sh221_PDF30_Ztt_MV140_280_BF.root","364137.Sh221_PDF30_Ztt_MV280_500_CVBV.root","364138.Sh221_PDF30_Ztt_MV280_500_CFBV.root","364139.Sh221_PDF30_Ztt_MV280_500_BF.root","364140.Sh221_PDF30_Ztt_MV500_1000.root","364141.Sh221_PDF30_Ztt_MV1000_E_CMS.root","364216.Sh221_PDF30_Zmumu_PTV500_1000.root","364217.Sh221_PDF30_Zmumu_PTV1000_E_CMS.root","364218.Sh221_PDF30_Zee_PTV500_1000.root","364219.Sh221_PDF30_Zee_PTV1000_E_CMS.root","364220.Sh221_PDF30_Ztt_PTV500_1000.root","364221.Sh221_PDF30_Ztt_PTV1000_E_CMS.root","364254.Sh222_PDF30_llvv.root","364285.Sh222_PDF30_llvvjj_EW6.root","364286.Sh222_PDF30_llvvjj_ss_EW4.root","366088.Sh_222__llvvjj_ss_Min_N_TChannel.root","410218.aMcNloPy8_MEN30NLO_ttee.root","410219.aMcNloPy8_MEN30NLO_ttmumu.root","364244.Sh222_PDF30_WWZ_2l4v_EW6.root","364249.Sh222_PDF30_ZZZ_2l4v_EW6.root","410472.PhPy8_A14_ttb_dil.root","410648.PoPy8_A14_Wt_DR_dilepton_top.root","410649.PoPy8_A14_Wt_DR_dilepton_atop.root","700492.Sh_2211_WqqZll.root","700493.Sh_2211_ZqqZll.root","700494.Sh_2211_ZbbZll.root","364302.Sh222_PDF30_ggZllZqq.root"], kBlack)]
 
-# ===== Features =====
+# Features
 feature_list = ['lep0_pt', 'lep1_pt', 'jet0_pt', 'jet1_pt', 'mll', 'mbb', 'pTdilep', 'deltaRjets', 'etabb', 'etall', 'n_jets', 'phibb', 'phill', 'metpt', 'cosll', 'coslminus', 'signedphi']
 yield_feature_list = ['c1lep0_pt', 'c2lep0_pt', 'c3lep0_pt', 'c4lep0_pt', 'c5lep0_pt']
 
-# ===== Helper Functions =====
+# Helper functions
 def load_hist(files, var):
     """
     Get histogram for a particular feature (e.g. pTl0) with data from the files given in the files list.
